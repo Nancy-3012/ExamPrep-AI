@@ -10,3 +10,6 @@ num_questions = st.selectbox(
     "Select number of questions",
     [5,10,15]
 )
+
+if st.button("Generate Questions"):
+    st.write("Questions will appear here.")
