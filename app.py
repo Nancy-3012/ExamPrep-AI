@@ -11,5 +11,8 @@ num_questions = st.selectbox(
     [5,10,15]
 )
 
+if uploaded_file is not None:
+    st.success("File uploaded successfully!")
+
 if st.button("Generate Questions"):
     st.write("Questions will appear here.")
