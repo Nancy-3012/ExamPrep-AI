@@ -2,19 +2,16 @@ import re
 
 def clean_text(text: str) -> str:
     """
-    Cleans extracted text by removing extra spaces,
-    line breaks, and unwanted characters.
+    Clean extracted text.
     """
+
     if not text:
         return ""
 
-    # Remove multiple newlines
-    text = re.sub(r"\n+", "\n", text)
-
-    # Remove extra spaces
+    # remove extra whitespace
     text = re.sub(r"\s+", " ", text)
 
-    # Remove non-printable characters
-    text = re.sub(r"[^\x00-\x7F]+", " ", text)
+    # remove strange characters
+    text = re.sub(r"[^\w\s.,()-]", "", text)
 
     return text.strip()
