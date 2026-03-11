@@ -1,5 +1,9 @@
 import streamlit as st
 
+from src.data_processing.pdf_loader import load_pdf
+from src.data_processing.cleaner import clean_text
+from src.chunking.chunker import chunk_text
+
 st.set_page_config(page_title="ExamPrep AI", layout="centered")
 
 st.title("📘 ExamPrep AI")
