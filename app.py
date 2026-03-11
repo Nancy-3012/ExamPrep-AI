@@ -22,4 +22,6 @@ if uploaded_file is not None:
 
     raw_text = load_pdf("temp.pdf")
 
-    st.success("Text extracted from PDF")
+    cleaned_text = clean_text(raw_text)
+
+    st.success("Text cleaned successfully")
