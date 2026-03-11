@@ -17,7 +17,9 @@ generate = st.button("Generate Questions")
 
 if uploaded_file is not None:
 
-    with open("temp.pdf", "wb") as f:
+    with open("temp.pdf","wb") as f:
         f.write(uploaded_file.read())
 
-    st.success("File uploaded successfully")
+    raw_text = load_pdf("temp.pdf")
+
+    st.success("Text extracted from PDF")
