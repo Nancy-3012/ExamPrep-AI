@@ -11,9 +11,13 @@ st.write("Upload your syllabus or notes and generate exam questions.")
 
 uploaded_file = st.file_uploader("Upload a PDF file", type=["pdf"])
 
-num_questions = st.selectbox(
-    "Number of questions",
-    [5, 10, 15]
-)
+num_questions = st.selectbox("Number of questions",[5,10,15])
 
 generate = st.button("Generate Questions")
+
+if uploaded_file is not None:
+
+    with open("temp.pdf", "wb") as f:
+        f.write(uploaded_file.read())
+
+    st.success("File uploaded successfully")
