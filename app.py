@@ -24,4 +24,6 @@ if uploaded_file is not None:
 
     cleaned_text = clean_text(raw_text)
 
-    st.success("Text cleaned successfully")
+    chunks = chunk_text(cleaned_text)
+
+    st.success(f"Document split into {len(chunks)} chunks")
