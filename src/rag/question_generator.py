@@ -1,25 +1,30 @@
 class QuestionGenerator:
     """
-    Generates exam questions from retrieved context without a fixed limit.
+    Generates clearer exam questions from retrieved context.
     """
 
     def generate_questions(self, context):
 
-        prompt = f"""
-You are an AI exam assistant.
+        questions = []
 
-Based on the following study material, generate as many useful exam questions as possible.
+        sentences = context.split(".")
 
-Study Material:
-{context}
+        for sentence in sentences:
 
-Instructions:
-- Create different types of questions:
-  • MCQ questions
-  • Short answer questions
-  • Viva questions
-- Do NOT limit the number of questions.
-- Generate all possible meaningful questions from the material.
-"""
+            sentence = sentence.strip()
 
-        return prompt
+            if len(sentence) < 30:
+                continue
+
+            # Clean extra spaces
+            sentence = " ".join(sentence.split())
+
+            # Extract first 8–12 words for cleaner question
+            words = sentence.split()[:10]
+            topic = " ".join(words)
+
+            question = f"What is {topic}?"
+
+            questions.append(question)
+
+        return questions
