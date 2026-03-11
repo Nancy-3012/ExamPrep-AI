@@ -1,20 +1,15 @@
 import streamlit as st
 
-st.title("ExamPrep AI")
+st.set_page_config(page_title="ExamPrep AI", layout="centered")
 
+st.title("📘 ExamPrep AI")
 st.write("Upload your syllabus or notes and generate exam questions.")
 
-uploaded_file = st.file_uploader("Upload syllabus or notes")
+uploaded_file = st.file_uploader("Upload a PDF file", type=["pdf"])
 
 num_questions = st.selectbox(
-    "Select number of questions",
-    [5,10,15]
+    "Number of questions",
+    [5, 10, 15]
 )
 
-if uploaded_file is not None:
-    st.success("File uploaded successfully!")
-    st.write("File name:", uploaded_file.name)
-    st.write("File type:", uploaded_file.type)
-
-if st.button("Generate Questions"):
-    st.write("Questions will appear here.")
+generate = st.button("Generate Questions")
