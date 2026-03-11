@@ -1,26 +1,20 @@
-def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50) -> list:
-    """
-    Splits text into overlapping chunks.
+from typing import List
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_core.documents import Document
 
-    Args:
-        text (str): cleaned text
-        chunk_size (int): size of each chunk
-        overlap (int): overlap between chunks
+class TextChunker:
+    """Class to split documents into chunks."""
 
-    Returns:
-        list of text chunks
-    """
-    if not text:
-        return []
+    def __init__(self, chunk_size: int = 1000, chunk_overlap: int = 200):
 
-    chunks = []
-    start = 0
-    text_length = len(text)
+        self.text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
+            length_function=len,
+        )
 
-    while start < text_length:
-        end = start + chunk_size
-        chunk = text[start:end]
-        chunks.append(chunk)
-        start = end - overlap
+    def split_text(self, text: str) -> List[str]:
+        return self.text_splitter.split_text(text)
 
-    return chunks
+    def split_documents(self, documents: List[Document]) -> List[Document]:
+        return self.text_splitter.split_documents(documents)
