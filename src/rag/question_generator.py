@@ -1,11 +1,13 @@
 class QuestionGenerator:
     """
-    Generates clearer exam questions from retrieved context.
+    Generates different types of exam questions from retrieved context.
     """
 
     def generate_questions(self, context):
 
-        questions = []
+        mcq = []
+        short_answer = []
+        viva = []
 
         sentences = context.split(".")
 
@@ -16,15 +18,12 @@ class QuestionGenerator:
             if len(sentence) < 30:
                 continue
 
-            # Clean extra spaces
             sentence = " ".join(sentence.split())
-
-            # Extract first 8–12 words for cleaner question
             words = sentence.split()[:10]
             topic = " ".join(words)
 
-            question = f"What is {topic}?"
+            mcq.append(f"What does {topic} refer to?")
+            short_answer.append(f"Explain {topic}.")
+            viva.append(f"Can you describe {topic}?")
 
-            questions.append(question)
-
-        return questions
+        return mcq, short_answer, viva
