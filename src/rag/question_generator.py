@@ -1,29 +1,52 @@
+import random
+import re
+
 class QuestionGenerator:
-    """
-    Generates different types of exam questions from retrieved context.
-    """
 
     def generate_questions(self, context):
 
-        mcq = []
-        short_answer = []
-        viva = []
-
         sentences = context.split(".")
+        topics = []
 
         for sentence in sentences:
 
             sentence = sentence.strip()
 
-            if len(sentence) < 30:
+            # Remove very short sentences
+            if len(sentence) < 40:
                 continue
 
-            sentence = " ".join(sentence.split())
-            words = sentence.split()[:10]
+            # Skip slide numbers / formatting
+            if re.search(r"\d+ ---", sentence):
+                continue
+
+            # Skip professor names / headers
+            if "Professor" in sentence or "University" in sentence:
+                continue
+
+            words = sentence.split()[:8]
             topic = " ".join(words)
 
-            mcq.append(f"What does {topic} refer to?")
+            topics.append(topic)
+
+        mcq = []
+        short_answer = []
+        viva = []
+
+        for topic in topics:
+
+            distractors = random.sample(topics, min(3, len(topics)))
+
+            options = distractors + [topic]
+            random.shuffle(options)
+
+            mcq.append({
+                "question": f"What best describes {topic}?",
+                "options": options,
+                "answer": topic
+            })
+
             short_answer.append(f"Explain {topic}.")
-            viva.append(f"Can you describe {topic}?")
+            viva.append(f"What do you understand by {topic}?")
 
         return mcq, short_answer, viva
