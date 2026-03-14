@@ -35,13 +35,13 @@ class QuestionGenerator:
 
         for topic in topics:
 
-            distractors = random.sample(topics, min(3, len(topics)))
+            distractors = random.sample([t for t in topics if t != topic], min(3, len(topics)-1))
 
-            options = distractors + [topic]
-            random.shuffle(options)
+           options = distractors + [topic]
+           random.shuffle(options)
 
             mcq.append({
-                "question": f"What best describes {topic}?",
+                question = f"Which of the following best explains: {topic}?",
                 "options": options,
                 "answer": topic
             })
