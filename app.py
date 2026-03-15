@@ -11,14 +11,16 @@ st.write("Upload your syllabus or notes and generate exam questions.")
 
 uploaded_file = st.file_uploader("Upload a PDF file", type=["pdf"])
 
-num_questions = st.selectbox("Number of questions", [5,10,15])
+num_questions = st.selectbox("Number of questions", [5, 10, 15])
 
 generate = st.button("Generate Questions")
 
 if uploaded_file is not None:
 
-    with open("temp.pdf","wb") as f:
+    with open("temp.pdf", "wb") as f:
         f.write(uploaded_file.read())
+
+    st.info("PDF uploaded successfully")
 
     raw_text = load_pdf("temp.pdf")
 
@@ -31,4 +33,6 @@ if uploaded_file is not None:
     st.success(f"Document split into {len(chunks)} chunks")
 
     st.write("Sample Chunk:")
-    st.write(chunks[0][:300])
+
+    if len(chunks) > 0:
+        st.write(chunks[0][:300])
