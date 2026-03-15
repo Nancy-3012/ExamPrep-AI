@@ -20,8 +20,6 @@ if uploaded_file is not None:
     with open("temp.pdf", "wb") as f:
         f.write(uploaded_file.read())
 
-    st.info("PDF uploaded successfully")
-
     raw_text = load_pdf("temp.pdf")
 
     cleaned_text = clean_text(raw_text)
@@ -32,7 +30,6 @@ if uploaded_file is not None:
 
     st.success(f"Document split into {len(chunks)} chunks")
 
-    st.write("Sample Chunk:")
-
     if len(chunks) > 0:
+        st.write("Sample Chunk:")
         st.write(chunks[0][:300])
