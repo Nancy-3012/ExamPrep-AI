@@ -6,7 +6,7 @@ import random
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
-# --------------- CUSTOM UI ---------------
+# ---------------- CUSTOM UI ----------------
 st.markdown("""
 <style>
 .stApp { background-color: #0e0e0e; color: white; }
