@@ -10,7 +10,10 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 st.markdown("""
 <style>
 .stApp { background-color: #0e0e0e; color: white; }
-section[data-testid="stSidebar"] { background-color: #121212; }
+
+section[data-testid="stSidebar"] {
+    background-color: #121212;
+}
 
 .card {
     background: rgba(255,255,255,0.05);
@@ -28,10 +31,10 @@ section[data-testid="stSidebar"] { background-color: #121212; }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------- SESSION ----------------
+# ---------------- SESSION DEFAULTS ----------------
 defaults = {
     "logged_in": False,
-    "page": "login",
+    "auth_page": "login",
     "current_page": "Dashboard",
     "generated": False,
     "doc_count": 0,
@@ -40,9 +43,10 @@ defaults = {
     "show_answers": False
 }
 
-for key, val in defaults.items():
-    if key not in st.session_state:
-        st.session_state[key] = val
+for k, v in defaults.items():
+    if k not in st.session_state:
+        st.session_state[k] = v
+
 
 # ---------------- USER STORAGE ----------------
 USER_FILE = "users.json"
@@ -69,11 +73,12 @@ def signup(username, password):
     save_users(users)
     return True
 
-# ---------------- LOGIN ----------------
+
+# ---------------- LOGIN PAGE ----------------
 def login_page():
     st.title("ExamPrep AI")
 
-    if st.session_state.page == "login":
+    if st.session_state.auth_page == "login":
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
 
@@ -85,7 +90,7 @@ def login_page():
                 st.error("Invalid credentials")
 
         if st.button("Create Account"):
-            st.session_state.page = "signup"
+            st.session_state.auth_page = "signup"
             st.rerun()
 
     else:
@@ -95,45 +100,55 @@ def login_page():
         if st.button("Sign Up"):
             if signup(username, password):
                 st.success("Account created")
-                st.session_state.page = "login"
+                st.session_state.auth_page = "login"
                 st.rerun()
             else:
                 st.error("User already exists")
 
         if st.button("Back"):
-            st.session_state.page = "login"
+            st.session_state.auth_page = "login"
             st.rerun()
+
 
 # ---------------- SIDEBAR ----------------
 def sidebar():
-    st.sidebar.title("ExamPrep AI")
+    st.sidebar.markdown("## ExamPrep AI")
+    st.sidebar.markdown("---")
 
     if st.sidebar.button("Dashboard"):
         st.session_state.current_page = "Dashboard"
 
-    if st.sidebar.button("Upload"):
+    if st.sidebar.button("Upload & Generate"):
         st.session_state.current_page = "Upload"
 
     if st.session_state.generated:
-        st.sidebar.markdown("---")
-        if st.sidebar.button("MCQ"):
+        st.sidebar.markdown("### Content")
+
+        if st.sidebar.button("MCQ Questions"):
             st.session_state.current_page = "MCQ"
-        if st.sidebar.button("Short"):
+
+        if st.sidebar.button("Short Answers"):
             st.session_state.current_page = "Short"
-        if st.sidebar.button("Long"):
+
+        if st.sidebar.button("Long Answers"):
             st.session_state.current_page = "Long"
-        if st.sidebar.button("Quiz"):
+
+        if st.sidebar.button("Quiz Mode"):
             st.session_state.current_page = "Quiz"
 
     st.sidebar.markdown("---")
     st.session_state.show_answers = st.sidebar.toggle("Show Answers")
 
+    st.sidebar.markdown("---")
+
     if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
         st.rerun()
 
-# ---------------- MAIN ----------------
+
+# ---------------- MAIN APP ----------------
 def main_app():
+
     from src.data_processing.pdf_loader import load_pdf
     from src.data_processing.cleaner import clean_text
     from src.chunking.chunker import TextChunker
@@ -142,24 +157,58 @@ def main_app():
     sidebar()
     page = st.session_state.current_page
 
-    # -------- DASHBOARD --------
+    # ---------------- DASHBOARD ----------------
     if page == "Dashboard":
         st.title("Dashboard")
+        st.markdown("### Overview")
 
         col1, col2, col3 = st.columns(3)
 
-        col1.markdown(f'<div class="metric-card">Documents<br><h2>{st.session_state.doc_count}</h2></div>', unsafe_allow_html=True)
-        col2.markdown(f'<div class="metric-card">Questions<br><h2>{st.session_state.question_count}</h2></div>', unsafe_allow_html=True)
-        col3.markdown(f'<div class="metric-card">Quizzes<br><h2>{st.session_state.quiz_count}</h2></div>', unsafe_allow_html=True)
+        col1.markdown(f"""
+        <div class="metric-card">
+            <h4>Documents</h4>
+            <h2>{st.session_state.doc_count}</h2>
+        </div>
+        """, unsafe_allow_html=True)
 
-    # -------- UPLOAD --------
+        col2.markdown(f"""
+        <div class="metric-card">
+            <h4>Questions</h4>
+            <h2>{st.session_state.question_count}</h2>
+        </div>
+        """, unsafe_allow_html=True)
+
+        col3.markdown(f"""
+        <div class="metric-card">
+            <h4>Quizzes</h4>
+            <h2>{st.session_state.quiz_count}</h2>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("### Quick Actions")
+
+        c1, c2 = st.columns(2)
+
+        with c1:
+            if st.button("Upload New Document"):
+                st.session_state.current_page = "Upload"
+                st.rerun()
+
+        with c2:
+            if st.button("Start Quiz"):
+                st.session_state.current_page = "Quiz"
+                st.rerun()
+
+    # ---------------- UPLOAD ----------------
     elif page == "Upload":
-        st.title("Upload and Generate")
+        st.title("Upload and Generate Questions")
 
         uploaded_file = st.file_uploader("Upload PDF", type=["pdf"])
         num_questions = st.selectbox("Number of questions", [5, 10, 15])
 
         if uploaded_file:
+            st.success("File uploaded")
+
             with open("temp.pdf", "wb") as f:
                 f.write(uploaded_file.read())
 
@@ -169,9 +218,9 @@ def main_app():
             chunker = TextChunker()
             chunks = chunker.split_text(cleaned_text)
 
-            st.success(f"{len(chunks)} chunks created")
+            st.info(f"{len(chunks)} chunks created")
 
-            if st.button("Generate"):
+            if st.button("Generate Questions"):
                 context = " ".join(random.sample(chunks, min(5, len(chunks))))
 
                 generator = QuestionGenerator()
@@ -185,9 +234,9 @@ def main_app():
                 st.session_state.doc_count += 1
                 st.session_state.question_count += num_questions
 
-                st.success("Generated successfully")
+                st.success("Questions generated")
 
-    # -------- MCQ --------
+    # ---------------- MCQ ----------------
     elif page == "MCQ":
         st.title("MCQ Questions")
 
@@ -198,25 +247,27 @@ def main_app():
                 st.write(f"{chr(65+idx)}. {opt}")
 
             if st.session_state.show_answers:
-                st.write(f"Answer: {q['answer']}")
+                st.success(f"Answer: {q['answer']}")
 
             st.write("---")
 
-    # -------- SHORT --------
+    # ---------------- SHORT ----------------
     elif page == "Short":
         st.title("Short Answers")
+
         for i, q in enumerate(st.session_state.short):
             st.markdown(f'<div class="card">{i+1}. {q}</div>', unsafe_allow_html=True)
 
-    # -------- LONG --------
+    # ---------------- LONG ----------------
     elif page == "Long":
         st.title("Long Answers")
+
         for i, q in enumerate(st.session_state.viva):
             st.markdown(f'<div class="card">{i+1}. {q}</div>', unsafe_allow_html=True)
 
-    # -------- QUIZ --------
+    # ---------------- QUIZ ----------------
     elif page == "Quiz":
-        st.title("Quiz")
+        st.title("Quiz Mode")
 
         if "q_index" not in st.session_state:
             st.session_state.q_index = 0
@@ -225,17 +276,21 @@ def main_app():
         questions = st.session_state.mcq
         total = len(questions)
 
+        if total == 0:
+            st.warning("No questions generated yet.")
+            return
+
         st.progress(st.session_state.q_index / total)
 
         q = questions[st.session_state.q_index]
 
-        st.markdown(f'<div class="card">{q["question"]}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="card"><b>{q["question"]}</b></div>', unsafe_allow_html=True)
 
-        selected = st.radio("Select answer", q["options"], key=st.session_state.q_index)
+        selected = st.radio("Choose answer", q["options"], key=f"q_{st.session_state.q_index}")
 
-        col1, col2 = st.columns(2)
+        c1, c2 = st.columns(2)
 
-        with col1:
+        with c1:
             if st.button("Next"):
                 if selected == q["answer"]:
                     st.session_state.score += 1
@@ -247,22 +302,29 @@ def main_app():
 
                 st.rerun()
 
-        with col2:
+        with c2:
             if st.button("Exit"):
                 st.session_state.q_index = 0
                 st.session_state.score = 0
                 st.session_state.current_page = "Dashboard"
                 st.rerun()
 
-    # -------- RESULT --------
+    # ---------------- RESULT ----------------
     elif page == "Result":
         st.title("Result")
 
-        st.write(f"Score: {st.session_state.score}")
+        total = len(st.session_state.mcq)
+        score = st.session_state.score
+        accuracy = (score / total) * 100 if total > 0 else 0
 
-        st.write(f"Total Questions: {len(st.session_state.mcq)}")
-        st.write(f"Correct Answers: {st.session_state.score}")
-        st.write(f"Accuracy: {round((st.session_state.score / len(st.session_state.mcq)) * 100, 2)}%")
+        st.markdown(f"""
+        <div class="metric-card">
+            <h2>{score} / {total}</h2>
+            <p>Score</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.write(f"Accuracy: {round(accuracy,2)}%")
 
         st.session_state.quiz_count += 1
 
@@ -271,6 +333,7 @@ def main_app():
             st.session_state.score = 0
             st.session_state.current_page = "Dashboard"
             st.rerun()
+
 
 # ---------------- ROUTING ----------------
 if not st.session_state.logged_in:
