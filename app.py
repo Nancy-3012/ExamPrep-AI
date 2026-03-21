@@ -48,8 +48,6 @@ def login_page():
         unsafe_allow_html=True
     )
 
-    st.write("")
-
     if st.session_state.page == "login":
         st.subheader("Login")
 
@@ -140,7 +138,7 @@ def main_app():
 
     # -------- OPTIONS --------
     if st.session_state.generated:
-        st.markdown("## Choose what you want")
+        st.markdown("##  Choose what you want")
 
         col1, col2 = st.columns(2)
 
@@ -148,19 +146,19 @@ def main_app():
             if st.button("MCQ"):
                 st.session_state.view = "mcq"
 
-            if st.button(" Long Answer"):
+            if st.button("Long Answer"):
                 st.session_state.view = "long"
 
         with col2:
             if st.button(" Short Answer"):
                 st.session_state.view = "short"
 
-            if st.button("Take Quiz"):
+            if st.button(" Take Quiz"):
                 st.session_state.view = "quiz"
 
     # -------- DISPLAY --------
     if st.session_state.view == "mcq":
-        st.subheader(" MCQ Questions")
+        st.subheader("MCQ Questions")
         for i, q in enumerate(st.session_state.mcq):
             st.write(f"**Q{i+1}: {q['question']}**")
             for idx, opt in enumerate(q["options"]):
@@ -174,13 +172,36 @@ def main_app():
             st.write(f"{i+1}. {q}")
 
     elif st.session_state.view == "long":
-        st.subheader(" Long / Viva Questions")
+        st.subheader("🎤 Long / Viva Questions")
         for i, q in enumerate(st.session_state.viva):
             st.write(f"{i+1}. {q}")
 
     elif st.session_state.view == "quiz":
         st.subheader(" Quiz Mode")
-        st.info("quiz logic")
+
+        if "score_submitted" not in st.session_state:
+            st.session_state.score_submitted = False
+
+        score = 0
+
+        for i, q in enumerate(st.session_state.mcq):
+            st.write(f"**Q{i+1}: {q['question']}**")
+
+            user_ans = st.radio(
+                f"Select answer for Q{i+1}",
+                q["options"],
+                key=f"quiz_{i}"
+            )
+
+            if user_ans == q["answer"]:
+                score += 1
+
+        if st.button("Submit Quiz"):
+            st.session_state.score_submitted = True
+            st.session_state.score = score
+
+        if st.session_state.score_submitted:
+            st.success(f"Your Score: {st.session_state.score}/{len(st.session_state.mcq)}")
 
 # ---------------- ROUTING ----------------
 if not st.session_state.logged_in:
