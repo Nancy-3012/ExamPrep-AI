@@ -3,7 +3,6 @@ import json
 import os
 import sys
 
-# Fix imports
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 # ---------------- SESSION ----------------
@@ -13,8 +12,8 @@ if "logged_in" not in st.session_state:
 if "page" not in st.session_state:
     st.session_state.page = "login"
 
-if "view" not in st.session_state:
-    st.session_state.view = "home"
+if "current_page" not in st.session_state:
+    st.session_state.current_page = "Dashboard"
 
 if "generated" not in st.session_state:
     st.session_state.generated = False
@@ -84,6 +83,39 @@ def login_page():
             st.session_state.page = "login"
             st.rerun()
 
+# ---------------- SIDEBAR ----------------
+def sidebar():
+    st.sidebar.title("ExamPrep AI")
+
+    if st.sidebar.button("Dashboard"):
+        st.session_state.current_page = "Dashboard"
+
+    if st.sidebar.button("Upload & Generate"):
+        st.session_state.current_page = "Upload"
+
+    if st.session_state.generated:
+        st.sidebar.markdown("---")
+        st.sidebar.write("Question Modes")
+
+        if st.sidebar.button("MCQ"):
+            st.session_state.current_page = "MCQ"
+
+        if st.sidebar.button("Short Answer"):
+            st.session_state.current_page = "Short"
+
+        if st.sidebar.button("Long Answer"):
+            st.session_state.current_page = "Long"
+
+        if st.sidebar.button("Quiz"):
+            st.session_state.current_page = "Quiz"
+
+    st.sidebar.markdown("---")
+
+    if st.sidebar.button("Logout"):
+        st.session_state.logged_in = False
+        st.session_state.current_page = "Dashboard"
+        st.rerun()
+
 # ---------------- MAIN APP ----------------
 def main_app():
     from src.data_processing.pdf_loader import load_pdf
@@ -91,15 +123,25 @@ def main_app():
     from src.chunking.chunker import TextChunker
     from src.question_generation.generator import QuestionGenerator
 
-    st.title("ExamPrep AI Dashboard")
+    sidebar()
 
-    if st.button("Logout"):
-        st.session_state.logged_in = False
-        st.session_state.view = "home"
-        st.rerun()
+    page = st.session_state.current_page
 
-    # ---------------- HOME SCREEN ----------------
-    if st.session_state.view == "home":
+    # ---------------- DASHBOARD ----------------
+    if page == "Dashboard":
+        st.title("Dashboard")
+
+        st.write("Welcome to ExamPrep AI")
+
+        col1, col2, col3 = st.columns(3)
+
+        col1.metric("Documents Processed", "1")
+        col2.metric("Questions Generated", "50")
+        col3.metric("Quiz Attempts", "2")
+
+    # ---------------- UPLOAD ----------------
+    elif page == "Upload":
+        st.title("Upload and Generate")
 
         uploaded_file = st.file_uploader("Upload PDF", type=["pdf"])
         num_questions = st.selectbox("Number of questions", [5, 10, 15])
@@ -129,36 +171,9 @@ def main_app():
                 st.session_state.generated = True
                 st.success("Questions Generated")
 
-        if st.session_state.generated:
-            st.subheader("Select Mode")
-
-            col1, col2 = st.columns(2)
-
-            with col1:
-                if st.button("MCQ"):
-                    st.session_state.view = "mcq"
-                    st.rerun()
-
-                if st.button("Long Answer"):
-                    st.session_state.view = "long"
-                    st.rerun()
-
-            with col2:
-                if st.button("Short Answer"):
-                    st.session_state.view = "short"
-                    st.rerun()
-
-                if st.button("Quiz"):
-                    st.session_state.view = "quiz"
-                    st.rerun()
-
-    # ---------------- MCQ PAGE ----------------
-    elif st.session_state.view == "mcq":
-        st.subheader("MCQ Questions")
-
-        if st.button("Back"):
-            st.session_state.view = "home"
-            st.rerun()
+    # ---------------- MCQ ----------------
+    elif page == "MCQ":
+        st.title("MCQ Questions")
 
         for i, q in enumerate(st.session_state.mcq):
             st.write(f"Q{i+1}: {q['question']}")
@@ -167,35 +182,23 @@ def main_app():
             st.write(f"Answer: {q['answer']}")
             st.write("---")
 
-    # ---------------- SHORT PAGE ----------------
-    elif st.session_state.view == "short":
-        st.subheader("Short Answer Questions")
-
-        if st.button("Back"):
-            st.session_state.view = "home"
-            st.rerun()
+    # ---------------- SHORT ----------------
+    elif page == "Short":
+        st.title("Short Answer Questions")
 
         for i, q in enumerate(st.session_state.short):
             st.write(f"{i+1}. {q}")
 
-    # ---------------- LONG PAGE ----------------
-    elif st.session_state.view == "long":
-        st.subheader("Long Answer Questions")
-
-        if st.button("Back"):
-            st.session_state.view = "home"
-            st.rerun()
+    # ---------------- LONG ----------------
+    elif page == "Long":
+        st.title("Long Answer Questions")
 
         for i, q in enumerate(st.session_state.viva):
             st.write(f"{i+1}. {q}")
 
-    # ---------------- QUIZ PAGE ----------------
-    elif st.session_state.view == "quiz":
-        st.subheader("Quiz Mode")
-
-        if st.button("Back"):
-            st.session_state.view = "home"
-            st.rerun()
+    # ---------------- QUIZ ----------------
+    elif page == "Quiz":
+        st.title("Quiz Mode")
 
         score = 0
 
@@ -211,7 +214,7 @@ def main_app():
                 score += 1
 
         if st.button("Submit Quiz"):
-            st.success(f"Your Score: {score}/{len(st.session_state.mcq)}")
+            st.success(f"Score: {score}/{len(st.session_state.mcq)}")
 
 # ---------------- ROUTING ----------------
 if not st.session_state.logged_in:
