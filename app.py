@@ -2,45 +2,28 @@ import streamlit as st
 import json
 import os
 import sys
+import random
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
-# ---------------- CUSTOM CSS ----------------
+# ---------------- CUSTOM UI ----------------
 st.markdown("""
 <style>
-body {
-    background-color: #0e0e0e;
-    color: white;
-}
-
-.stApp {
-    background-color: #0e0e0e;
-}
-
-section[data-testid="stSidebar"] {
-    background-color: #121212;
-}
+.stApp { background-color: #0e0e0e; color: white; }
+section[data-testid="stSidebar"] { background-color: #121212; }
 
 .card {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255,255,255,0.05);
     padding: 20px;
-    border-radius: 15px;
-    margin: 10px 0;
-    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    margin-bottom: 15px;
 }
 
 .metric-card {
-    background: linear-gradient(135deg, #1db954, #191414);
+    background: linear-gradient(135deg,#1db954,#191414);
     padding: 20px;
-    border-radius: 15px;
+    border-radius: 12px;
     text-align: center;
-    color: white;
-}
-
-button[kind="primary"] {
-    background-color: #1db954;
-    color: white;
-    border-radius: 10px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -57,6 +40,16 @@ if "current_page" not in st.session_state:
 
 if "generated" not in st.session_state:
     st.session_state.generated = False
+
+# stats
+if "doc_count" not in st.session_state:
+    st.session_state.doc_count = 0
+
+if "question_count" not in st.session_state:
+    st.session_state.question_count = 0
+
+if "quiz_count" not in st.session_state:
+    st.session_state.quiz_count = 0
 
 # ---------------- USER STORAGE ----------------
 USER_FILE = "users.json"
@@ -84,13 +77,11 @@ def signup(username, password):
     save_users(users)
     return True
 
-# ---------------- LOGIN PAGE ----------------
+# ---------------- LOGIN ----------------
 def login_page():
-    st.markdown("<h1 style='text-align:center;'>ExamPrep AI</h1>", unsafe_allow_html=True)
+    st.title("ExamPrep AI")
 
     if st.session_state.page == "login":
-        st.subheader("Login")
-
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
 
@@ -106,20 +97,18 @@ def login_page():
             st.rerun()
 
     else:
-        st.subheader("Sign Up")
-
         username = st.text_input("Create Username")
         password = st.text_input("Create Password", type="password")
 
         if st.button("Sign Up"):
             if signup(username, password):
-                st.success("Account created. Please login.")
+                st.success("Account created")
                 st.session_state.page = "login"
                 st.rerun()
             else:
-                st.error("Username already exists")
+                st.error("User exists")
 
-        if st.button("Back to Login"):
+        if st.button("Back"):
             st.session_state.page = "login"
             st.rerun()
 
@@ -135,26 +124,21 @@ def sidebar():
 
     if st.session_state.generated:
         st.sidebar.markdown("---")
-
         if st.sidebar.button("MCQ"):
             st.session_state.current_page = "MCQ"
-
         if st.sidebar.button("Short"):
             st.session_state.current_page = "Short"
-
         if st.sidebar.button("Long"):
             st.session_state.current_page = "Long"
-
         if st.sidebar.button("Quiz"):
             st.session_state.current_page = "Quiz"
 
     st.sidebar.markdown("---")
-
     if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
         st.rerun()
 
-# ---------------- MAIN APP ----------------
+# ---------------- MAIN ----------------
 def main_app():
     from src.data_processing.pdf_loader import load_pdf
     from src.data_processing.cleaner import clean_text
@@ -170,9 +154,9 @@ def main_app():
 
         col1, col2, col3 = st.columns(3)
 
-        col1.markdown('<div class="metric-card">Documents<br><h2>1</h2></div>', unsafe_allow_html=True)
-        col2.markdown('<div class="metric-card">Questions<br><h2>50</h2></div>', unsafe_allow_html=True)
-        col3.markdown('<div class="metric-card">Quizzes<br><h2>2</h2></div>', unsafe_allow_html=True)
+        col1.markdown(f'<div class="metric-card">Documents<br><h2>{st.session_state.doc_count}</h2></div>', unsafe_allow_html=True)
+        col2.markdown(f'<div class="metric-card">Questions<br><h2>{st.session_state.question_count}</h2></div>', unsafe_allow_html=True)
+        col3.markdown(f'<div class="metric-card">Quizzes<br><h2>{st.session_state.quiz_count}</h2></div>', unsafe_allow_html=True)
 
     # ---------------- UPLOAD ----------------
     elif page == "Upload":
@@ -194,36 +178,36 @@ def main_app():
             st.success(f"{len(chunks)} chunks created")
 
             if st.button("Generate"):
-                context = " ".join(chunks[:5])
+                context = " ".join(random.sample(chunks, min(5, len(chunks))))
 
                 generator = QuestionGenerator()
-                mcq, short_answer, viva = generator.generate_questions(context)
+                mcq, short, viva = generator.generate_questions(context)
 
                 st.session_state.mcq = mcq[:num_questions]
-                st.session_state.short = short_answer[:num_questions]
+                st.session_state.short = short[:num_questions]
                 st.session_state.viva = viva[:num_questions]
 
                 st.session_state.generated = True
+                st.session_state.doc_count += 1
+                st.session_state.question_count += num_questions
+
                 st.success("Generated successfully")
 
     # ---------------- MCQ ----------------
     elif page == "MCQ":
         st.title("MCQ Questions")
-
         for q in st.session_state.mcq:
             st.markdown(f'<div class="card">{q["question"]}</div>', unsafe_allow_html=True)
 
     # ---------------- SHORT ----------------
     elif page == "Short":
-        st.title("Short Answer")
-
+        st.title("Short Answers")
         for q in st.session_state.short:
             st.markdown(f'<div class="card">{q}</div>', unsafe_allow_html=True)
 
     # ---------------- LONG ----------------
     elif page == "Long":
-        st.title("Long Answer")
-
+        st.title("Long Answers")
         for q in st.session_state.viva:
             st.markdown(f'<div class="card">{q}</div>', unsafe_allow_html=True)
 
@@ -231,18 +215,55 @@ def main_app():
     elif page == "Quiz":
         st.title("Quiz")
 
-        score = 0
+        if "q_index" not in st.session_state:
+            st.session_state.q_index = 0
+            st.session_state.score = 0
 
-        for i, q in enumerate(st.session_state.mcq):
-            st.markdown(f'<div class="card">{q["question"]}</div>', unsafe_allow_html=True)
+        questions = st.session_state.mcq
+        total = len(questions)
 
-            ans = st.radio("Select", q["options"], key=i)
+        st.progress(st.session_state.q_index / total)
 
-            if ans == q["answer"]:
-                score += 1
+        q = questions[st.session_state.q_index]
 
-        if st.button("Submit"):
-            st.success(f"Score: {score}/{len(st.session_state.mcq)}")
+        st.markdown(f'<div class="card">{q["question"]}</div>', unsafe_allow_html=True)
+
+        selected = st.radio("Select answer", q["options"], key=st.session_state.q_index)
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            if st.button("Next"):
+                if selected == q["answer"]:
+                    st.session_state.score += 1
+
+                st.session_state.q_index += 1
+
+                if st.session_state.q_index >= total:
+                    st.session_state.current_page = "Result"
+
+                st.rerun()
+
+        with col2:
+            if st.button("Exit"):
+                st.session_state.q_index = 0
+                st.session_state.score = 0
+                st.session_state.current_page = "Dashboard"
+                st.rerun()
+
+    # ---------------- RESULT ----------------
+    elif page == "Result":
+        st.title("Result")
+
+        st.write(f"Score: {st.session_state.score}")
+
+        st.session_state.quiz_count += 1
+
+        if st.button("Back to Dashboard"):
+            st.session_state.q_index = 0
+            st.session_state.score = 0
+            st.session_state.current_page = "Dashboard"
+            st.rerun()
 
 # ---------------- ROUTING ----------------
 if not st.session_state.logged_in:
