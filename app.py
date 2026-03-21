@@ -44,7 +44,7 @@ def login_page():
     st.set_page_config(page_title="ExamPrep AI", layout="centered")
 
     st.markdown(
-        "<h1 style='text-align:center;'> ExamPrep AI</h1>",
+        "<h1 style='text-align:center;'>ExamPrep AI</h1>",
         unsafe_allow_html=True
     )
 
@@ -57,7 +57,6 @@ def login_page():
         if st.button("Login"):
             if login(username, password):
                 st.session_state.logged_in = True
-                st.success("Welcome back!")
                 st.rerun()
             else:
                 st.error("Invalid credentials")
@@ -75,7 +74,7 @@ def login_page():
 
         if st.button("Sign Up"):
             if signup(username, password):
-                st.success("Account created! Please login.")
+                st.success("Account created. Please login.")
                 st.session_state.page = "login"
                 st.rerun()
             else:
@@ -93,12 +92,41 @@ def main_app():
     from src.chunking.chunker import TextChunker
     from src.question_generation.generator import QuestionGenerator
 
-    st.title(" ExamPrep AI Dashboard")
+    # -------- DARK THEME --------
+    st.markdown("""
+        <style>
+        .stApp {
+            background-color: #121212;
+            color: white;
+        }
+        h1, h2, h3, h4 {
+            color: white;
+        }
+        .stButton>button {
+            background-color: #1DB954;
+            color: white;
+            border-radius: 8px;
+            padding: 8px 16px;
+            border: none;
+        }
+        .stButton>button:hover {
+            background-color: #1ed760;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Header
+    st.markdown("""
+    <h1 style='text-align: center;'>ExamPrep AI</h1>
+    <p style='text-align: center; color: gray;'>AI-powered exam preparation system</p>
+    """, unsafe_allow_html=True)
 
     # Logout
     if st.button("Logout"):
         st.session_state.logged_in = False
         st.rerun()
+
+    st.markdown("---")
 
     # INIT STATE
     if "generated" not in st.session_state:
@@ -107,9 +135,18 @@ def main_app():
     if "view" not in st.session_state:
         st.session_state.view = None
 
+    if "score_submitted" not in st.session_state:
+        st.session_state.score_submitted = False
+
     # -------- UPLOAD --------
-    uploaded_file = st.file_uploader("Upload PDF", type=["pdf"])
+    st.subheader("Upload Study Material")
+
+    uploaded_file = st.file_uploader("", type=["pdf"])
     num_questions = st.selectbox("Number of questions", [5, 10, 15])
+
+    col1, col2, col3 = st.columns([1,2,1])
+    with col2:
+        generate_btn = st.button("Generate Questions")
 
     if uploaded_file:
         with open("temp.pdf", "wb") as f:
@@ -123,7 +160,7 @@ def main_app():
 
         st.success(f"{len(chunks)} chunks created")
 
-        if st.button("Generate Questions"):
+        if generate_btn:
             context = " ".join(chunks[:5])
 
             generator = QuestionGenerator()
@@ -134,11 +171,13 @@ def main_app():
             st.session_state.viva = viva[:num_questions]
 
             st.session_state.generated = True
-            st.success("Questions Generated!")
+            st.toast("Questions generated successfully")
+
+    st.markdown("---")
 
     # -------- OPTIONS --------
     if st.session_state.generated:
-        st.markdown("##  Choose what you want")
+        st.subheader("Select Mode")
 
         col1, col2 = st.columns(2)
 
@@ -150,45 +189,44 @@ def main_app():
                 st.session_state.view = "long"
 
         with col2:
-            if st.button(" Short Answer"):
+            if st.button("Short Answer"):
                 st.session_state.view = "short"
 
-            if st.button(" Take Quiz"):
+            if st.button("Quiz"):
                 st.session_state.view = "quiz"
+
+    st.markdown("---")
 
     # -------- DISPLAY --------
     if st.session_state.view == "mcq":
         st.subheader("MCQ Questions")
         for i, q in enumerate(st.session_state.mcq):
-            st.write(f"**Q{i+1}: {q['question']}**")
+            st.write(f"Q{i+1}: {q['question']}")
             for idx, opt in enumerate(q["options"]):
                 st.write(f"{chr(65+idx)}) {opt}")
-            st.write(f"✅ Answer: {q['answer']}")
+            st.write(f"Answer: {q['answer']}")
             st.write("---")
 
     elif st.session_state.view == "short":
-        st.subheader(" Short Answer Questions")
+        st.subheader("Short Answer Questions")
         for i, q in enumerate(st.session_state.short):
             st.write(f"{i+1}. {q}")
 
     elif st.session_state.view == "long":
-        st.subheader("🎤 Long / Viva Questions")
+        st.subheader("Long Answer Questions")
         for i, q in enumerate(st.session_state.viva):
             st.write(f"{i+1}. {q}")
 
     elif st.session_state.view == "quiz":
-        st.subheader(" Quiz Mode")
-
-        if "score_submitted" not in st.session_state:
-            st.session_state.score_submitted = False
+        st.subheader("Quiz")
 
         score = 0
 
         for i, q in enumerate(st.session_state.mcq):
-            st.write(f"**Q{i+1}: {q['question']}**")
+            st.write(f"Q{i+1}: {q['question']}")
 
             user_ans = st.radio(
-                f"Select answer for Q{i+1}",
+                "Select answer",
                 q["options"],
                 key=f"quiz_{i}"
             )
@@ -197,11 +235,11 @@ def main_app():
                 score += 1
 
         if st.button("Submit Quiz"):
-            st.session_state.score_submitted = True
             st.session_state.score = score
+            st.session_state.score_submitted = True
 
         if st.session_state.score_submitted:
-            st.success(f"Your Score: {st.session_state.score}/{len(st.session_state.mcq)}")
+            st.success(f"Score: {st.session_state.score}/{len(st.session_state.mcq)}")
 
 # ---------------- ROUTING ----------------
 if not st.session_state.logged_in:
