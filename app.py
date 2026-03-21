@@ -260,6 +260,10 @@ def main_app():
 
         st.write(f"Score: {st.session_state.score}")
 
+        st.write(f"Total Questions: {len(st.session_state.mcq)}")
+        st.write(f"Correct Answers: {st.session_state.score}")
+        st.write(f"Accuracy: {round((st.session_state.score / len(st.session_state.mcq)) * 100, 2)}%")
+
         st.session_state.quiz_count += 1
 
         if st.button("Back to Dashboard"):
