@@ -5,6 +5,46 @@ import sys
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
+# ---------------- CUSTOM CSS ----------------
+st.markdown("""
+<style>
+body {
+    background-color: #0e0e0e;
+    color: white;
+}
+
+.stApp {
+    background-color: #0e0e0e;
+}
+
+section[data-testid="stSidebar"] {
+    background-color: #121212;
+}
+
+.card {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    border-radius: 15px;
+    margin: 10px 0;
+    backdrop-filter: blur(10px);
+}
+
+.metric-card {
+    background: linear-gradient(135deg, #1db954, #191414);
+    padding: 20px;
+    border-radius: 15px;
+    text-align: center;
+    color: white;
+}
+
+button[kind="primary"] {
+    background-color: #1db954;
+    color: white;
+    border-radius: 10px;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # ---------------- SESSION ----------------
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -46,7 +86,7 @@ def signup(username, password):
 
 # ---------------- LOGIN PAGE ----------------
 def login_page():
-    st.title("ExamPrep AI")
+    st.markdown("<h1 style='text-align:center;'>ExamPrep AI</h1>", unsafe_allow_html=True)
 
     if st.session_state.page == "login":
         st.subheader("Login")
@@ -90,20 +130,19 @@ def sidebar():
     if st.sidebar.button("Dashboard"):
         st.session_state.current_page = "Dashboard"
 
-    if st.sidebar.button("Upload & Generate"):
+    if st.sidebar.button("Upload"):
         st.session_state.current_page = "Upload"
 
     if st.session_state.generated:
         st.sidebar.markdown("---")
-        st.sidebar.write("Question Modes")
 
         if st.sidebar.button("MCQ"):
             st.session_state.current_page = "MCQ"
 
-        if st.sidebar.button("Short Answer"):
+        if st.sidebar.button("Short"):
             st.session_state.current_page = "Short"
 
-        if st.sidebar.button("Long Answer"):
+        if st.sidebar.button("Long"):
             st.session_state.current_page = "Long"
 
         if st.sidebar.button("Quiz"):
@@ -113,7 +152,6 @@ def sidebar():
 
     if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
-        st.session_state.current_page = "Dashboard"
         st.rerun()
 
 # ---------------- MAIN APP ----------------
@@ -124,20 +162,17 @@ def main_app():
     from src.question_generation.generator import QuestionGenerator
 
     sidebar()
-
     page = st.session_state.current_page
 
     # ---------------- DASHBOARD ----------------
     if page == "Dashboard":
         st.title("Dashboard")
 
-        st.write("Welcome to ExamPrep AI")
-
         col1, col2, col3 = st.columns(3)
 
-        col1.metric("Documents Processed", "1")
-        col2.metric("Questions Generated", "50")
-        col3.metric("Quiz Attempts", "2")
+        col1.markdown('<div class="metric-card">Documents<br><h2>1</h2></div>', unsafe_allow_html=True)
+        col2.markdown('<div class="metric-card">Questions<br><h2>50</h2></div>', unsafe_allow_html=True)
+        col3.markdown('<div class="metric-card">Quizzes<br><h2>2</h2></div>', unsafe_allow_html=True)
 
     # ---------------- UPLOAD ----------------
     elif page == "Upload":
@@ -158,7 +193,7 @@ def main_app():
 
             st.success(f"{len(chunks)} chunks created")
 
-            if st.button("Generate Questions"):
+            if st.button("Generate"):
                 context = " ".join(chunks[:5])
 
                 generator = QuestionGenerator()
@@ -169,51 +204,44 @@ def main_app():
                 st.session_state.viva = viva[:num_questions]
 
                 st.session_state.generated = True
-                st.success("Questions Generated")
+                st.success("Generated successfully")
 
     # ---------------- MCQ ----------------
     elif page == "MCQ":
         st.title("MCQ Questions")
 
-        for i, q in enumerate(st.session_state.mcq):
-            st.write(f"Q{i+1}: {q['question']}")
-            for idx, opt in enumerate(q["options"]):
-                st.write(f"{chr(65+idx)}) {opt}")
-            st.write(f"Answer: {q['answer']}")
-            st.write("---")
+        for q in st.session_state.mcq:
+            st.markdown(f'<div class="card">{q["question"]}</div>', unsafe_allow_html=True)
 
     # ---------------- SHORT ----------------
     elif page == "Short":
-        st.title("Short Answer Questions")
+        st.title("Short Answer")
 
-        for i, q in enumerate(st.session_state.short):
-            st.write(f"{i+1}. {q}")
+        for q in st.session_state.short:
+            st.markdown(f'<div class="card">{q}</div>', unsafe_allow_html=True)
 
     # ---------------- LONG ----------------
     elif page == "Long":
-        st.title("Long Answer Questions")
+        st.title("Long Answer")
 
-        for i, q in enumerate(st.session_state.viva):
-            st.write(f"{i+1}. {q}")
+        for q in st.session_state.viva:
+            st.markdown(f'<div class="card">{q}</div>', unsafe_allow_html=True)
 
     # ---------------- QUIZ ----------------
     elif page == "Quiz":
-        st.title("Quiz Mode")
+        st.title("Quiz")
 
         score = 0
 
         for i, q in enumerate(st.session_state.mcq):
-            st.write(f"Q{i+1}: {q['question']}")
-            answer = st.radio(
-                "Select answer",
-                q["options"],
-                key=f"quiz_{i}"
-            )
+            st.markdown(f'<div class="card">{q["question"]}</div>', unsafe_allow_html=True)
 
-            if answer == q["answer"]:
+            ans = st.radio("Select", q["options"], key=i)
+
+            if ans == q["answer"]:
                 score += 1
 
-        if st.button("Submit Quiz"):
+        if st.button("Submit"):
             st.success(f"Score: {score}/{len(st.session_state.mcq)}")
 
 # ---------------- ROUTING ----------------
